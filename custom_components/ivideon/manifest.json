@@ -1,0 +1,11 @@
+
+{
+  "domain": "ivideon",
+  "name": "Ivideon MQTT Sensor",
+  "version": "1.0.0",
+  "documentation": "",
+  "requirements": [],
+  "dependencies": ["mqtt"],
+  "codeowners": [],
+  "config_flow": true
+}
