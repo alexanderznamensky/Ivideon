@@ -3,9 +3,10 @@
   "domain": "ivideon",
   "name": "Ivideon MQTT Sensor",
   "version": "1.0.0",
-  "documentation": "",
+  "documentation": "https://github.com/alexanderznamensky/Ivideon",
+  "issue_tracker": "https://github.com/alexanderznamensky/Ivideon/issues",
   "requirements": [],
   "dependencies": ["mqtt"],
-  "codeowners": [],
+  "codeowners": ["@alexanderznamensky"],
   "config_flow": true
 }
