@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Настройка Ivideon",
+        "description": "Введите данные для входа в аккаунт Ivideon",
+        "data": {
+          "email": "Email",
+          "password": "Пароль",
+          "scan_interval": "Интервал обновления (минуты)"
+        },
+        "data_description": {
+          "scan_interval": "Как часто обновлять данные (от 1 до 1440 минут)"
+        }
+      },
+      "reconfigure": {
+        "title": "Изменить настройки Ivideon",
+        "description": "Обновите данные для входа или интервал обновления для {email}",
+        "data": {
+          "email": "Email",
+          "password": "Пароль",
+          "scan_interval": "Интервал обновления (минуты)"
+        },
+        "data_description": {
+          "scan_interval": "Как часто обновлять данные (от 1 до 1440 минут)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Неверный email или пароль",
+      "unknown": "Неизвестная ошибка"
+    },
+    "abort": {
+      "already_configured": "Этот аккаунт Ivideon уже настроен",
+      "reconfigure_successful": "Настройки успешно обновлены"
+    }
+  }
+}

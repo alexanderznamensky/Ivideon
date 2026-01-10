@@ -1,16 +1,38 @@
-
 {
   "config": {
     "step": {
       "user": {
-        "title": "Add Ivideon Sensor",
-        "description": "Configure your sensor",
+        "title": "Ivideon Setup",
+        "description": "Enter your Ivideon account credentials",
         "data": {
-          "name": "Name",
-          "sensor_id": "Sensor ID (used in MQTT topic)"
+          "email": "Email",
+          "password": "Password",
+          "scan_interval": "Update interval (minutes)"
+        },
+        "data_description": {
+          "scan_interval": "How often to update data (from 1 to 1440 minutes)"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Ivideon",
+        "description": "Update credentials or update interval for {email}",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "scan_interval": "Update interval (minutes)"
+        },
+        "data_description": {
+          "scan_interval": "How often to update data (from 1 to 1440 minutes)"
         }
       }
     },
-    "error": {}
+    "error": {
+      "invalid_auth": "Invalid email or password",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "already_configured": "This Ivideon account is already configured",
+      "reconfigure_successful": "Settings updated successfully"
+    }
   }
 }
