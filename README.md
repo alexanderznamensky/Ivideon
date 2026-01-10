@@ -19,6 +19,21 @@
 - **Next Payment Date** - Дата следующего платежа
 - **Next Payment Amount** - Сумма следующего платежа
 
+### Сенсоры камер (создаются автоматически):
+- **sensor.ivideon_1, sensor.ivideon_2, sensor.ivideon_3...** - по одному сенсору на камеру
+  - Entity ID: стабильный, на основе индекса (`sensor.ivideon_1`)
+  - Friendly Name: название камеры ("Ворота в арке", "Входная дверь")
+  - State: "оплачен до 13 января 2026 г."
+  - Атрибуты:
+    - `due_date` - Дата окончания (DD.MM.YYYY)
+    - `message` - Умное сообщение о необходимости оплаты
+    - `days_left` - Количество дней до окончания
+    - `price` - Стоимость тарифа
+    - `camera_name` - Название камеры
+    - `camera_id` - ID камеры
+    - `tariff_name` - Название тарифа
+    - И другие данные о камере
+
 ### Диагностические сенсоры:
 - **Real Balance** - Реальный баланс (без бонусов)
 - **Bonus Balance** - Бонусный баланс
@@ -96,6 +111,42 @@ entities:
   - entity: sensor.cameras_count
 ```
 
+### Просмотр камер
+
+Для каждой камеры создается отдельный сенсор:
+
+```yaml
+type: entities
+title: Ivideon Камеры
+entities:
+  - sensor.ivideon_1
+    secondary_info: last-updated
+  - sensor.ivideon_2
+    secondary_info: last-updated
+  - sensor.ivideon_3
+    secondary_info: last-updated
+```
+
+Friendly name каждого сенсора автоматически берется из названия камеры:
+- `sensor.ivideon_1` → "Ворота в арке"
+- `sensor.ivideon_2` → "Входная дверь"
+- `sensor.ivideon_3` → "Парковка"
+
+Карточка с детальной информацией:
+
+```yaml
+type: markdown
+title: Камера
+content: |
+  **{{ state_attr('sensor.ivideon_1', 'camera_name') }}**
+  
+  {{ state_attr('sensor.ivideon_1', 'message') }}
+  
+  💰 Стоимость: {{ state_attr('sensor.ivideon_1', 'price') }} ₽
+  📅 Оплачен до: {{ state_attr('sensor.ivideon_1', 'due_date') }}
+  ⏰ Осталось дней: {{ state_attr('sensor.ivideon_1', 'days_left') }}
+```
+
 ### Автоматизации
 
 Пример автоматизации для уведомления о низком балансе:
@@ -133,11 +184,82 @@ automation:
             Сумма: {{ states('sensor.next_payment_amount') }} ₽
 ```
 
+Уведомление об оплате конкретной камеры (за 3 дня):
+
+```yaml
+automation:
+  - alias: "Ivideon: Напоминание об оплате камеры"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.ivideon_1
+        attribute: days_left
+        below: 4
+    condition:
+      - condition: template
+        value_template: "{{ state_attr('sensor.ivideon_1', 'days_left') > 0 }}"
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "📹 {{ state_attr('sensor.ivideon_1', 'camera_name') }}"
+          message: "{{ state_attr('sensor.ivideon_1', 'message') }}"
+          data:
+            priority: high
+```
+
+Проверка всех камер и уведомление о тех, которые скоро нужно оплатить:
+
+```yaml
+automation:
+  - alias: "Ivideon: Ежедневная проверка камер"
+    trigger:
+      - platform: time
+        at: "09:00:00"
+    action:
+      - repeat:
+          count: "{{ states('sensor.cameras_count') | int }}"
+          sequence:
+            - variables:
+                camera_sensor: "sensor.ivideon_{{ repeat.index }}"
+            - condition: template
+              value_template: >
+                {{ state_attr(camera_sensor, 'days_left') is not none and
+                   state_attr(camera_sensor, 'days_left') <= 3 and
+                   state_attr(camera_sensor, 'days_left') > 0 }}
+            - service: notify.mobile_app
+              data:
+                title: "📹 Скоро окончание оплаты"
+                message: "{{ state_attr(camera_sensor, 'message') }}"
+```
+
 ### Атрибуты сенсоров
 
 #### Balance
 - `user_id` - ID пользователя
+- `success` - Статус успешности запроса
+- `balance` - Общий баланс (в копейках)
+- `real_balance` - Реальный баланс (в копейках)
+- `bonus_balance` - Бонусный баланс (в копейках)
 - `currency` - Валюта
+- `credit_limit` - Кредитный лимит
+- `locked_balance` - Заблокированный баланс
+- `last_updated` - Время последнего обновления
+
+#### Ivideon 1, 2, 3... (камерные сенсоры)
+- `camera_name` - Название камеры
+- `camera_id` - ID камеры
+- `due_date` - Дата окончания (DD.MM.YYYY)
+- `message` - Сообщение о необходимости оплаты
+- `days_left` - Количество дней до окончания
+- `price` - Стоимость тарифа
+- `currency` - Валюта
+- `tariff_name` - Название тарифа
+- `tariff_id` - ID тарифа
+- `period` - Период оплаты
+- `payment_type` - Тип оплаты
+- `active` - Активна ли камера
+- `expired` - Истёк ли тариф
+- `start_date` - Дата начала
+- `expires_date` - Дата окончания (ISO)
 - `last_updated` - Время последнего обновления
 
 #### Next Payment Amount
@@ -196,6 +318,26 @@ automation:
 MIT License
 
 ## Changelog
+
+### 1.2.3
+- Исправлено: Автоматическая конвертация валюты RUR → RUB во всех сенсорах и атрибутах
+- Все значения currency теперь показывают "RUB" вместо "RUR"
+
+### 1.2.2
+- Entity ID камерных сенсоров: стабильные sensor.ivideon_1, sensor.ivideon_2, ...
+- Friendly Name автоматически берется из названия камеры
+- Entity ID не изменится при переименовании камеры
+
+### 1.2.1
+- Исправлено: Имена камерных сенсоров теперь используют название камеры
+- Исправлено: sensor.balance корректно отображает значение
+- Добавлены все атрибуты баланса из API response
+
+### 1.2.0
+- Добавлены индивидуальные сенсоры для каждой камеры
+- Умные уведомления о необходимости оплаты для каждой камеры
+- Форматирование дат на русском языке
+- Подробные атрибуты для каждого камерного сенсора
 
 ### 1.1.0
 - Добавлена настройка интервала обновления через UI (от 1 до 1440 минут)
