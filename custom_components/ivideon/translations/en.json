@@ -34,5 +34,11 @@
       "already_configured": "This Ivideon account is already configured",
       "reconfigure_successful": "Settings updated successfully"
     }
+  },
+  "services": {
+    "update": {
+      "name": "Update data",
+      "description": "Force update data from Ivideon servers"
+    }
   }
 }

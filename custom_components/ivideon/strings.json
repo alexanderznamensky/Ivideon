@@ -34,5 +34,11 @@
       "already_configured": "Этот аккаунт Ivideon уже настроен",
       "reconfigure_successful": "Настройки успешно обновлены"
     }
+  },
+  "services": {
+    "update": {
+      "name": "Обновить данные",
+      "description": "Принудительно обновить данные с серверов Ivideon"
+    }
   }
 }
