@@ -1,4 +1,4 @@
 update:
   name: Обновить данные
-  description: Принудительно обновить данные с сервера Ivideon
+  description: Принудительно обновить данные с серверов Ivideon
   fields: {}

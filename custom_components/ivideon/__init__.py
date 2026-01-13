@@ -3,13 +3,12 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Final
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryAuthFailed
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 
 from .api import IvideonAPI
 from .const import DOMAIN, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_MINUTES
@@ -19,20 +18,42 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
-SERVICE_UPDATE = "update"
+SERVICE_UPDATE: Final = "update"
 
 
-async def async_handle_update_service(
-    hass: HomeAssistant, call: ServiceCall
-) -> None:
-    """Handle the update service call."""
-    _LOGGER.debug("Update service called")
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Ivideon component."""
     
-    # Update all Ivideon coordinators
-    for entry_id, coordinator in hass.data[DOMAIN].items():
-        if isinstance(coordinator, IvideonDataUpdateCoordinator):
-            _LOGGER.debug("Requesting refresh for entry %s", entry_id)
-            await coordinator.async_request_refresh()
+    async def handle_update_service(call: ServiceCall) -> None:
+        """Handle the update service call."""
+        _LOGGER.debug("Update service called")
+        
+        # Check if domain data exists
+        if DOMAIN not in hass.data:
+            _LOGGER.warning("No Ivideon integrations configured")
+            return
+        
+        # Update all Ivideon coordinators
+        updated_count = 0
+        for entry_id, coordinator in hass.data[DOMAIN].items():
+            if isinstance(coordinator, IvideonDataUpdateCoordinator):
+                try:
+                    _LOGGER.debug("Requesting refresh for entry %s", entry_id)
+                    await coordinator.async_request_refresh()
+                    updated_count += 1
+                except Exception as err:
+                    _LOGGER.error("Failed to update entry %s: %s", entry_id, err)
+        
+        if updated_count > 0:
+            _LOGGER.info("Successfully requested update for %d Ivideon integration(s)", updated_count)
+        else:
+            _LOGGER.warning("No Ivideon coordinators found to update")
+    
+    # Register the update service
+    hass.services.async_register(DOMAIN, SERVICE_UPDATE, handle_update_service)
+    _LOGGER.info("Registered %s.%s service", DOMAIN, SERVICE_UPDATE)
+    
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -71,16 +92,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    # Register update service (only once for the domain)
-    if not hass.services.has_service(DOMAIN, SERVICE_UPDATE):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_UPDATE,
-            async_handle_update_service,
-            schema=vol.Schema({}),
-        )
-        _LOGGER.debug("Registered %s.%s service", DOMAIN, SERVICE_UPDATE)
 
     return True
 
