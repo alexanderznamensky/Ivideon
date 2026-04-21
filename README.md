@@ -1,4 +1,5 @@
 # Ivideon Integration для Home Assistant
+<img width="1017" height="256" alt="logo" src="https://github.com/user-attachments/assets/dade079a-d911-4022-88ee-3825116f6783" />
 
 Интеграция для мониторинга баланса и платежей в Ivideon Cloud Camera Service.
 
