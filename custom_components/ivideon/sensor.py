@@ -128,6 +128,8 @@ def get_days_until(target_date: datetime) -> int:
 class IvideonSensorBase(CoordinatorEntity[IvideonDataUpdateCoordinator], SensorEntity):
     """Base class for Ivideon sensors."""
 
+    _attr_force_update = True
+
     def __init__(
         self,
         coordinator: IvideonDataUpdateCoordinator,
@@ -142,6 +144,15 @@ class IvideonSensorBase(CoordinatorEntity[IvideonDataUpdateCoordinator], SensorE
             "model": "Cloud Camera Service",
         }
         self._entry = entry
+
+    def _base_state_attributes(self) -> Dict[str, Any]:
+        """Return base attributes common to all entities."""
+        if not self.coordinator.data:
+            return {}
+
+        return {
+            ATTR_UPDATED: self.coordinator.data.get("updated_at"),
+        }
 
     @property
     def available(self) -> bool:
@@ -224,6 +235,7 @@ class IvideonCameraSensor(IvideonSensorBase):
                 pass
 
         return {
+            **self._base_state_attributes(),
             "camera_name": camera.get("camera_name"),
             "camera_id": camera.get("camera_id"),
             "due_date": due_date_str,
@@ -313,6 +325,7 @@ class IvideonBalanceSensor(IvideonSensorBase):
         response = balance_data.get("response") or {}
 
         return {
+            **self._base_state_attributes(),
             ATTR_USER_ID: self.coordinator.data.get("user_id"),
             "success": balance_data.get("success"),
             "balance": response.get("balance"),
@@ -461,6 +474,7 @@ class IvideonNextPaymentDateSensor(IvideonSensorBase):
         billing_data = self.coordinator.data.get("billing") or {}
 
         return {
+            **self._base_state_attributes(),
             ATTR_CAMERAS: billing_data.get("cameras_count", 0),
             ATTR_CURRENCY: normalize_currency(billing_data.get("currency")),
         }
@@ -531,6 +545,7 @@ class IvideonNextPaymentAmountSensor(IvideonSensorBase):
         ]
 
         return {
+            **self._base_state_attributes(),
             ATTR_CAMERAS: cameras_due,
             ATTR_CURRENCY: normalize_currency(billing_data.get("currency")),
         }
@@ -572,6 +587,7 @@ class IvideonCamerasCountSensor(IvideonSensorBase):
         cameras = billing_data.get("cameras", [])
 
         return {
+            **self._base_state_attributes(),
             ATTR_CAMERAS: [
                 {
                     "name": cam.get("camera_name"),

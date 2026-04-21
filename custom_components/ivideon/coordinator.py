@@ -1,8 +1,11 @@
 """Data update coordinator for Ivideon."""
+from __future__ import annotations
+
 import logging
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -13,26 +16,29 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
-class IvideonDataUpdateCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
+class IvideonDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching Ivideon data."""
 
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
         api: IvideonAPI,
         update_interval: timedelta,
     ) -> None:
         """Initialize the coordinator."""
         self.api = api
+        self.entry = entry
 
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
+            config_entry=entry,
             update_interval=update_interval,
         )
 
-    async def _async_update_data(self) -> Dict[str, Any]:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API."""
         try:
             return await self.api.get_data()
