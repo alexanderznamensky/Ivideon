@@ -7,7 +7,7 @@
         "data": {
           "email": "Email",
           "password": "Пароль",
-          "scan_interval": "Интервал обновления (минуты)"
+          "scan_interval": "Интервал обновления, мин."
         },
         "data_description": {
           "scan_interval": "Как часто обновлять данные (от 1 до 1440 минут)"
@@ -19,7 +19,7 @@
         "data": {
           "email": "Email",
           "password": "Пароль",
-          "scan_interval": "Интервал обновления (минуты)"
+          "scan_interval": "Интервал обновления, мин."
         },
         "data_description": {
           "scan_interval": "Как часто обновлять данные (от 1 до 1440 минут)"
@@ -47,7 +47,7 @@
         "title": "Параметры Ivideon",
         "description": "Измените интервал обновления данных",
         "data": {
-          "scan_interval": "Интервал обновления (минуты)"
+          "scan_interval": "Интервал обновления, мин."
         },
         "data_description": {
           "scan_interval": "Как часто обновлять данные (от 1 до 1440 минут)"

@@ -77,6 +77,28 @@ def normalize_currency(currency: Optional[str]) -> str:
     return CURRENCY_MAPPING.get(currency.upper(), currency)
 
 
+def _format_money(value: Any) -> Optional[float]:
+    """Format a monetary value with 2 decimal places as float."""
+    if value is None:
+        return None
+
+    try:
+        return float(f"{float(value):.2f}")
+    except (ValueError, TypeError):
+        return None
+
+
+def _format_balance(value: Any) -> Optional[float]:
+    """Format Ivideon balance from kopecks to rubles with 2 decimal places."""
+    if value is None:
+        return None
+
+    try:
+        return float(f"{float(value) / 100.0:.2f}")
+    except (ValueError, TypeError):
+        return None
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -241,7 +263,7 @@ class IvideonCameraSensor(IvideonSensorBase):
             "due_date": due_date_str,
             "message": message,
             "days_left": days_left,
-            "price": camera.get("cost"),
+            "price": _format_money(camera.get("cost")),
             "currency": normalize_currency(camera.get("currency")),
             "tariff_name": camera.get("tariff_name"),
             "tariff_id": camera.get("tariff_id"),
@@ -299,10 +321,7 @@ class IvideonBalanceSensor(IvideonSensorBase):
         if balance is None:
             return None
 
-        try:
-            return round(float(balance) / 100.0, 2)  # Convert kopecks to rubles
-        except (ValueError, TypeError):
-            return None
+        return _format_balance(balance)
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -328,12 +347,12 @@ class IvideonBalanceSensor(IvideonSensorBase):
             **self._base_state_attributes(),
             ATTR_USER_ID: self.coordinator.data.get("user_id"),
             "success": balance_data.get("success"),
-            "balance": response.get("balance"),
-            "real_balance": response.get("real_balance"),
-            "bonus_balance": response.get("bonus_balance"),
+            "balance": _format_balance(response.get("balance")),
+            "real_balance": _format_balance(response.get("real_balance")),
+            "bonus_balance": _format_balance(response.get("bonus_balance")),
             "currency": normalize_currency(response.get("currency")),
-            "credit_limit": response.get("credit_limit"),
-            "locked_balance": response.get("locked_balance"),
+            "credit_limit": _format_balance(response.get("credit_limit")),
+            "locked_balance": _format_balance(response.get("locked_balance")),
             ATTR_UPDATED: self.coordinator.data.get("updated_at"),
         }
 
@@ -368,10 +387,7 @@ class IvideonRealBalanceSensor(IvideonSensorBase):
         if real_balance is None:
             return None
 
-        try:
-            return round(float(real_balance) / 100.0, 2)
-        except (ValueError, TypeError):
-            return None
+        return _format_balance(real_balance)
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -415,10 +431,7 @@ class IvideonBonusBalanceSensor(IvideonSensorBase):
         if bonus_balance is None:
             return None
 
-        try:
-            return round(float(bonus_balance) / 100.0, 2)
-        except (ValueError, TypeError):
-            return None
+        return _format_balance(bonus_balance)
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -508,10 +521,7 @@ class IvideonNextPaymentAmountSensor(IvideonSensorBase):
         if amount is None:
             return None
 
-        try:
-            return round(float(amount), 2)
-        except (ValueError, TypeError):
-            return None
+        return _format_money(amount)
 
     @property
     def native_unit_of_measurement(self) -> Optional[str]:
@@ -538,7 +548,7 @@ class IvideonNextPaymentAmountSensor(IvideonSensorBase):
             {
                 "name": cam.get("camera_name"),
                 "tariff": cam.get("tariff_name"),
-                "cost": cam.get("cost"),
+                "cost": _format_money(cam.get("cost")),
             }
             for cam in cameras
             if cam.get("expires_iso") == next_date
@@ -594,7 +604,7 @@ class IvideonCamerasCountSensor(IvideonSensorBase):
                     "id": cam.get("camera_id"),
                     "tariff": cam.get("tariff_name"),
                     "expires": cam.get("expires_iso"),
-                    "cost": cam.get("cost"),
+                    "cost": _format_money(cam.get("cost")),
                     "active": cam.get("active"),
                     "expired": cam.get("expired"),
                 }
